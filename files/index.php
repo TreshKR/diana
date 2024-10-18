@@ -1,0 +1,1 @@
+Ej para ubicarse: El path de este index va a ser /var/www/html/index.php

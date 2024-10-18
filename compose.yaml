@@ -1,0 +1,35 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: php
+    volumes:
+      - ./files:/var/www/html
+    ports:
+      - "8080:80"
+    depends_on:
+      db:
+        condition: service_healthy # Wait for db to be healthy
+
+  db:
+    image: postgres:16.4
+    container_name: pgsql
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./sql_init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s      # Check every 10 seconds
+      timeout: 5s        # Wait up to 5 seconds for the command to complete
+      retries: 5         # Retry 5 times before considering the service unhealthy
+      start_period: 30s  # Wait 30 seconds before starting health checks
+
+volumes:
+  db_data:
