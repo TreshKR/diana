@@ -1,3 +1,9 @@
+<?php
+require("utils/Diana.php");
+$Diana = new Diana();
+
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -54,20 +60,15 @@
         <main class="flex-1 bg-gray-900 p-6 overflow-y-auto border-r border-gray-700">
             <div class="space-y-4">
                 <?php
-                $events = [
-                    ['date' => '2024-10-18', 'title' => 'Team Meeting', 'tag' => 'work', 'color' => 'bg-blue-500'],
-                    ['date' => '2024-10-19', 'title' => 'Client Call', 'tag' => 'important', 'color' => 'bg-red-500'],
-                    ['date' => '2024-10-20', 'title' => 'Project Deadline', 'tag' => 'work', 'color' => 'bg-green-500']
-                ];
-                
+                $events = $Diana->event_list([]);
                 foreach ($events as $event) {
                     echo "<div class='flex items-center space-x-4 p-3 bg-gray-800 rounded-lg hover:bg-gray-750 cursor-pointer transition-colors duration-150'>";
-                    echo "  <div class='text-sm text-gray-400'>{$event['date']}</div>";
+                    echo "  <div class='text-sm text-gray-400'>{$event['display_timestamp']}</div>";
                     echo "  <div class='flex-grow flex items-center space-x-2'>";
                     echo "    <div class='w-2 h-2 rounded-full {$event['color']}'></div>";
                     echo "    <div class='text-gray-200'>{$event['title']}</div>";
                     echo "  </div>";
-                    echo "  <span class='px-2 py-1 text-xs rounded-full bg-gray-700 text-gray-300'>{$event['tag']}</span>";
+                    echo "  <span class='px-2 py-1 text-xs rounded-full bg-gray-700 text-gray-300'>{$event['tags']}</span>";
                     echo "</div>";
                 }
                 ?>
