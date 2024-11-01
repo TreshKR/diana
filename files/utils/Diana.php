@@ -15,7 +15,7 @@ class Diana
         if( $db_conn !== null ){ $this->db = $db_conn; }
         else {
             try {    
-                $pdo = new PDO("mysql:host=".getenv(POSTGRES_HOST).";dbname=".getenv(POSTGRES_DB), getenv(POSTGRES_USER), getenv(POSTGRES_PASSWORD));
+                $pdo = new PDO("mysql:host=".getenv("POSTGRES_HOST").";dbname=".getenv("POSTGRES_DB"), getenv("POSTGRES_USER"), getenv("POSTGRES_PASSWORD"));
             
                 // Set the PDO error mode to exception
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
