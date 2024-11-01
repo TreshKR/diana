@@ -1,4 +1,12 @@
 -- ESTO ES CLAUDE AI con una levísima revisión humana
+-- Create projects table
+CREATE TABLE projects (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    title VARCHAR(255) NOT NULL,
+    description TEXT
+);
+
 -- Create events table
 CREATE TABLE events (
   id SERIAL PRIMARY KEY,
@@ -9,6 +17,7 @@ CREATE TABLE events (
   input_text TEXT,
   input_audio VARCHAR(255) DEFAULT NULL,
   input_image VARCHAR(255) DEFAULT NULL,
+  project_id INTEGER REFERENCES events(id),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
