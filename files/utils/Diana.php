@@ -119,22 +119,101 @@ class Diana
     }
 
     // EVENTS
-    public function event_list($filters){
-        try{
-            $sql = "SELECT events.*,
-                    STRING_AGG(tags.name, ', ') as tags
-                    FROM events
-                    LEFT JOIN events_tags et ON events.id = et.event_id
-                    LEFT JOIN tags ON et.tag_id = tags.id
-                    GROUP BY events.id
-                    ORDER BY events.display_timestamp DESC";
-                $list = $this->db->prepare($sql);
-            $list->execute();
-            return $list->fetchAll();
-        } catch (Exception $e){
-            die($e->getMessage());
-        }    
-    }
+    public function event_list( $filters = [] ) {
 
-    // get tags
+        // TAGS are the only filter that have their own table. They behave in a special way
+        $tags   = !empty($filters["tags"]) ? $filters["tags"] : null;
+        unset($filters["tags"]);
+        // OTHER FILTERS
+        $conditions = [];   // we'll build a condition for each filter
+        $params = [];       // and save whatever parameters the condition needs to work
+        foreach ( $filters AS $key => $value ) {
+            if (empty($value)) continue;
+            // EXCEPTIONS: Filters that have specific behaviour
+            // DATE
+            if ( $key == "date" ) {
+                $conditions[] = "e.display_timestamp BETWEEN :start::date AND :end::date";
+                $params["start"] = $filters["date"][0];
+                $params["end"] = $filters["date"][1];
+            }
+            // NORMAL BEHAVIOUR
+            else {
+                $conditions[] = "e.$key = :$key";
+                $params[$key] = $value;
+            }
+        }
+
+        $sql = "";
+        // If we are looking for specific tags, we need to build a virtual table
+        if ( !empty($tags) ) {
+            $sql .= "WITH events_with_required_tags AS (
+                        SELECT events.id
+                        FROM events
+                        JOIN events_tags et ON events.id = et.event_id
+                        JOIN tags ON et.tag_id = tags.id
+                        WHERE tags.name IN ('".implode( "', '", $tags)."')
+                        GROUP BY events.id
+                    ) ";
+        }
+        // Build the rest of the query
+        $sql .= "SELECT e.*, STRING_AGG(tags.name, ', ') as tags FROM events e ";
+        if ( !empty($tags) )$sql .= "JOIN events_with_required_tags ewrt ON e.id = ewrt.id ";
+        $sql .= "LEFT JOIN events_tags et ON e.id = et.event_id
+                    LEFT JOIN tags ON et.tag_id = tags.id ";
+        // Include previously arranged conditions
+        if ( !empty($conditions) ) $sql .= "WHERE ".implode( " AND ", $conditions) . " ";
+        $sql .= "GROUP BY e.id
+                ORDER BY e.display_timestamp DESC";
+        try {
+            $list = $this->db->prepare($sql);
+            // Use the params array to complete the prepared statement
+            $list->execute($params);
+            return $list->fetchAll();
+        } catch (Exception $e) {
+            die($e->getMessage());
+        }
+
+    }
+    public function tag_list( $project_id = null ) {
+        $sql = "SELECT tags.name, COUNT(DISTINCT events.id) as count
+                FROM tags 
+                JOIN events_tags ON tags.id = events_tags.tag_id 
+                JOIN events ON events.id = events_tags.event_id 
+                WHERE events.project_id = :project_id
+                GROUP BY tags.name
+                ORDER BY tags.name";
+        try {
+            $list = $this->db->prepare($sql);
+            $list->execute([ "project_id" => $project_id ]);
+            return $list->fetchAll();
+        } catch (Exception $e) {
+            die($e->getMessage());
+        }
+    }
+    public function color_list( $project_id = null ) {
+        $sql = "SELECT color, COUNT(DISTINCT id) as count FROM events
+                WHERE project_id = :project_id
+                GROUP BY color
+                ORDER BY count DESC, color ASC";
+        try {
+            $list = $this->db->prepare($sql);
+            $list->execute([ "project_id" => $project_id ]);
+            return $list->fetchAll();
+        } catch (Exception $e) {
+            die($e->getMessage());
+        }
+    }
+    public function icon_list( $project_id = null ) {
+        $sql = "SELECT icon, COUNT(DISTINCT id) as count FROM events
+                WHERE project_id = :project_id
+                GROUP BY icon
+                ORDER BY count DESC, icon ASC";
+        try {
+            $list = $this->db->prepare($sql);
+            $list->execute([ "project_id" => $project_id ]);
+            return $list->fetchAll();
+        } catch (Exception $e) {
+            die($e->getMessage());
+        }
+    }
 }

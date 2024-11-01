@@ -2,7 +2,30 @@
 require("utils/Diana.php");
 $Diana = new Diana();
 
+$project_id = 1;
 
+//if ($_SERVER['REQUEST_METHOD'] === 'POST') {}
+
+// EJ http://localhost:8080/?tags=work&color=blue&icon=users
+
+// FILTERS
+$filters = [];
+// TAGS
+if ( !empty($_GET["tags"]) ) {
+    $filters["tags"] = array_filter(array_map('trim', explode(",", $_GET["tags"])));
+}
+// COLOR
+if ( !empty($_GET["color"]) ) {
+    $filters["color"] = $_GET["color"];
+}
+// ICON
+if ( !empty($_GET["icon"]) ) {
+    $filters["icon"] = $_GET["icon"];
+}
+// DATE
+if ( !empty($_GET["date"]) ) {
+    $filters["date"] = ["2024-10-01", "2024-10-20"];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -43,11 +66,11 @@ $Diana = new Diana();
                     <label class="block text-sm font-medium text-gray-400">Tags</label>
                     <div class="space-y-1">
                         <?php
-                        $tags = ['work', 'personal', 'important', 'idea'];
+                        $tags = $Diana->tag_list( $project_id );
                         foreach ($tags as $tag) {
                             echo "<label class='flex items-center space-x-2'>
                                     <input type='checkbox' class='rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500'>
-                                    <span class='text-gray-300'>$tag</span>
+                                    <span class='text-gray-300'>{$tag['name']}</span>
                                   </label>";
                         }
                         ?>
@@ -60,13 +83,13 @@ $Diana = new Diana();
         <main class="flex-1 bg-gray-900 p-6 overflow-y-auto border-r border-gray-700">
             <div class="space-y-4">
                 <?php
-                $events = $Diana->event_list([]);
+                $events = $Diana->event_list( $filters );
                 foreach ($events as $event) {
                     echo "<div class='flex items-center space-x-4 p-3 bg-gray-800 rounded-lg hover:bg-gray-750 cursor-pointer transition-colors duration-150'>";
                     echo "  <div class='text-sm text-gray-400'>{$event['display_timestamp']}</div>";
                     echo "  <div class='flex-grow flex items-center space-x-2'>";
                     echo "    <div class='w-2 h-2 rounded-full {$event['color']}'></div>";
-                    echo "    <div class='text-gray-200'>{$event['title']}</div>";
+                    echo "    <div class='text-gray-200'>{$event['title']}, {$event['color']}, {$event['icon']}</div>";
                     echo "  </div>";
                     echo "  <span class='px-2 py-1 text-xs rounded-full bg-gray-700 text-gray-300'>{$event['tags']}</span>";
                     echo "</div>";
