@@ -1,0 +1,25 @@
+# Node development files
+node_modules/
+package-lock.json
+postcss.config.js
+tailwind.config.js
+
+# Environment variables
+.env
+
+# IDE/Editor specific
+.vscode/
+.idea/
+*.sublime-*
+*.swp
+*~
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Build output
+files/assets/css/output.css
+
+# Docker
+db_data/
