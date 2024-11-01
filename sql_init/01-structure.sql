@@ -17,7 +17,7 @@ CREATE TABLE events (
   input_text TEXT,
   input_audio VARCHAR(255) DEFAULT NULL,
   input_image VARCHAR(255) DEFAULT NULL,
-  project_id INTEGER REFERENCES events(id),
+  project_id INTEGER REFERENCES projects(id) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
