@@ -6,13 +6,13 @@
 // tiene sentido una estructura de microservicios? para mi nao... pero no se
 class Diana
 {
-    public $db = null
+    public $db = null;
     /*
         BASIC UTILITIES
     */
     // 
     public function __constructor( $db_conn ) {
-        if( $db_conn !== null ){ $this->db = $db_conn }
+        if( $db_conn !== null ){ $this->db = $db_conn; }
         else {
             try {    
                 $pdo = new PDO("mysql:host=".POSTGRES_HOST.";dbname=".POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD);
