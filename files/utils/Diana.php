@@ -11,12 +11,11 @@ class Diana
         BASIC UTILITIES
     */
     // 
-    public function __constructor( $db_conn ) {
-        if( $db_conn !== null ){ $this->db = $db_conn; }
+    public function __construct( $db_conn = [] ) {
+        if( !empty($db_conn) ){ $this->db = $db_conn; }
         else {
             try {    
-                $pdo = new PDO("mysql:host=".getenv("POSTGRES_HOST").";dbname=".getenv("POSTGRES_DB"), getenv("POSTGRES_USER"), getenv("POSTGRES_PASSWORD"));
-            
+                $pdo = new PDO("pgsql:host=".getenv("POSTGRES_HOST").";dbname=".getenv("POSTGRES_DB"), getenv("POSTGRES_USER"), getenv("POSTGRES_PASSWORD"));
                 // Set the PDO error mode to exception
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
@@ -63,9 +62,9 @@ class Diana
                     -- LEFT JOIN 
                     --     event_tags et ON e.id = et.event_id
                     WHERE 
-                        p.id IN $ids;";
+                        p.id IN ($in);";
             $list = $this->db->prepare($sql);
-            $list->execute($values);
+            $list->execute($ids);
             return $list->fetchAll();
         } catch (Exception $e){
             die($e->getMessage());
