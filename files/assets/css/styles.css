@@ -1,3 +1,44 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+<style>.litepicker {
+    background-color: #1F2937;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    color: #E5E7EB;
+}
+
+.litepicker .container__months {
+    background-color: #1F2937;
+}
+
+.litepicker .container__days .day-item {
+    color: #E5E7EB;
+}
+
+.litepicker .container__days .day-item:hover {
+    background-color: #374151;
+}
+
+.litepicker .container__days .day-item.is-start-date,
+.litepicker .container__days .day-item.is-end-date {
+    background-color: #2563EB;
+    color: white;
+}
+
+.litepicker .container__days .day-item.is-in-range {
+    background-color: #3B82F6;
+    opacity: 0.7;
+}
+
+.litepicker .container__months .month-item-header {
+    color: #E5E7EB;
+}
+
+.litepicker .button-previous-month,
+.litepicker .button-next-month {
+    color: #E5E7EB;
+}
+
+.litepicker .container__days .day-item.is-today {
+    color: #60A5FA;
+}
+
+</style>
