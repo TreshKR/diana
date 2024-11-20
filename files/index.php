@@ -92,7 +92,14 @@ $filters["project_id"] = $current_project_id;
         <aside class="w-64 bg-gray-800 p-4 border-r border-gray-700">
             <!-- Project Selection -->
             <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-400 mb-2">Project</label>
+                <div class="flex justify-between items-center mb-2">
+                    <label class="text-sm font-medium text-gray-400">Project</label>
+                    <button type="button" class="p-1 text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded-full transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                    </button>
+                </div>
                 <div class="relative">
                     <select class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <?php foreach ($projects as $project): 
@@ -108,11 +115,10 @@ $filters["project_id"] = $current_project_id;
                 <h2 class="text-lg font-semibold text-gray-300">Filters</h2>
                 
                 <form method="POST" class="space-y-4">
-                    <!-- Date Range -->
                     <!-- Hidden Project ID -->
                     <input type="hidden" name="project_id" value="<?= $current_project_id ?>">
 
-                    <!-- Date Range -->
+                    <!-- DATE RANGE SELECTOR -->
                     <div class="space-y-2">
                         <label class="block text-sm font-medium text-gray-400">Date Range</label>
                         <input 
@@ -124,7 +130,7 @@ $filters["project_id"] = $current_project_id;
                             class="w-full bg-gray-700 border border-gray-600 rounded-md py-1 px-2 text-gray-200"
                             readonly
                         >
-                        <!-- Botones de acceso rápido -->
+                        <!-- QUICK DATE ACCESS -->
                         <div class="flex space-x-2 mt-2">
                             <button type="button" 
                                 onclick="setToday()"
@@ -144,7 +150,7 @@ $filters["project_id"] = $current_project_id;
                         </div>
                     </div>
 
-                    <!-- Tags -->
+                    <!-- FILTER TAGs -->
                     <div class="space-y-2">
                         <label class="block text-sm font-medium text-gray-400">Tags</label>
                         <div class="h-48 overflow-y-auto space-y-1 bg-gray-750 rounded-md p-2">
@@ -184,8 +190,7 @@ $filters["project_id"] = $current_project_id;
         <!-- Middle Column - Timeline -->
         <main class="flex-1 bg-gray-900 p-6 overflow-y-auto border-r border-gray-700">
             <div class="space-y-4">
-                <?php
-                $events = $Diana->event_list( $filters );
+                <?php $events = $Diana->event_list($filters);
                 foreach ($events as $event) {
                     echo "<div class='flex items-center space-x-4 p-3 bg-gray-800 rounded-lg hover:bg-gray-750 cursor-pointer transition-colors duration-150'>";
                     echo "  <div class='text-sm text-gray-400'>{$event['display_timestamp']}</div>";
@@ -193,10 +198,19 @@ $filters["project_id"] = $current_project_id;
                     echo "    <div class='w-2 h-2 rounded-full {$event['color']}'></div>";
                     echo "    <div class='text-gray-200'>{$event['title']}, {$event['color']}, {$event['icon']}</div>";
                     echo "  </div>";
-                    echo "  <span class='px-2 py-1 text-xs rounded-full bg-gray-700 text-gray-300'>{$event['tags']}</span>";
+                    echo "  <div class='flex gap-2'>";
+                    
+                    // individual tag pills
+                    $tagArray = array_map('trim', explode(',', $event['tags']));
+                    foreach ($tagArray as $tag) {
+                        if (!empty($tag)) {
+                            echo "<button type='button' class='px-2 py-1 text-xs rounded-full bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors'>{$tag}</button>";
+                        }
+                    }
+                    
+                    echo "  </div>";
                     echo "</div>";
-                }
-                ?>
+                } ?>
             </div>
         </main>
 
