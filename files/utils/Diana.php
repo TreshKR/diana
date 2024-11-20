@@ -51,8 +51,9 @@ class Diana
 
 
     // getter - list of projects
-    public function project_list($ids){
+    public function project_list($ids = []){
         try{
+            /*
             $in  = str_repeat('?,', count($ids) - 1) . '?';
             $sql = "SELECT *
                     FROM 
@@ -63,6 +64,8 @@ class Diana
                     --     event_tags et ON e.id = et.event_id
                     WHERE 
                         p.id IN ($in);";
+            */
+            $sql = "SELECT id, title, description FROM projects ORDER BY created_at DESC";
             $list = $this->db->prepare($sql);
             $list->execute($ids);
             return $list->fetchAll();

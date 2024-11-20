@@ -2,9 +2,10 @@
 require("utils/Diana.php");
 $Diana = new Diana();
 
-$project_id = 1;
+$projects = $Diana->project_list();
 
-//if ($_SERVER['REQUEST_METHOD'] === 'POST') {}
+//$current_project_id = ($_SERVER['REQUEST_METHOD'] === 'POST') ? $_POST["project_id"] : $projects[0]["id"];
+$current_project_id = 1;
 
 // EJ http://localhost:8080/?tags=work&color=blue&icon=users
 
@@ -26,6 +27,8 @@ if ( !empty($_GET["icon"]) ) {
 if ( !empty($_GET["date"]) ) {
     $filters["date"] = ["2024-10-01", "2024-10-20"];
 }
+// PROJECT ID
+$filters["project_id"] = $current_project_id;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -44,9 +47,10 @@ if ( !empty($_GET["date"]) ) {
                 <label class="block text-sm font-medium text-gray-400 mb-2">Project</label>
                 <div class="relative">
                     <select class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option>Personal Timeline</option>
-                        <option>Work Project</option>
-                        <option>Study Notes</option>
+                        <?php foreach ($projects as $project): 
+                            $selected = ($project["id"] == $current_project_id) ? 'selected' : ''; ?>
+                            <option value="<?= $project["id"] ?>" <?= $selected ?> ><?= $project["title"] ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
             </div>
@@ -66,7 +70,7 @@ if ( !empty($_GET["date"]) ) {
                     <label class="block text-sm font-medium text-gray-400">Tags</label>
                     <div class="space-y-1">
                         <?php
-                        $tags = $Diana->tag_list( $project_id );
+                        $tags = $Diana->tag_list( $current_project_id );
                         foreach ($tags as $tag) {
                             echo "<label class='flex items-center space-x-2'>
                                     <input type='checkbox' class='rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500'>
