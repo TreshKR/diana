@@ -1,41 +1,38 @@
 <?php
+// Diane, 7:30 am, February twenty-fourth. Entering town of Twin Peaks.
 require("utils/Diana.php");
 $Diana = new Diana();
-
+// Get all the projects for this user
 $projects = $Diana->project_list();
+// PROJECT SELECTION - either via POST or the projects list
+$current_project_id = $_POST["project_id"] ?? $projects[0]["id"];
 
-//$current_project_id = ($_SERVER['REQUEST_METHOD'] === 'POST') ? $_POST["project_id"] : $projects[0]["id"];
-$current_project_id = 1;
-
-// EJ http://localhost:8080/?tags=work&color=blue&icon=users
-
-// FILTERS
+// FILTERS - Preparing the array that will hold all selected filters
 $filters = [];
-// TAGS
-if ( !empty($_GET["tags"]) ) {
-    $filters["tags"] = array_filter(array_map('trim', explode(",", $_GET["tags"])));
-}
-// COLOR
-if ( !empty($_GET["color"]) ) {
-    $filters["color"] = $_GET["color"];
-}
-// ICON
-if ( !empty($_GET["icon"]) ) {
-    $filters["icon"] = $_GET["icon"];
-}
-// DATE
-if (!empty($_POST["date_range"])) {
-    $dates = explode(',', $_POST["date_range"]);
-    if (count($dates) > 1) {
-        // Es un rango
-        $filters["date"] = [$dates[0], $dates[1]];
-    } else {
-        // Es una fecha única
-        $filters["date"] = [$dates[0], $dates[0]];
-    }
-}
 // PROJECT ID
 $filters["project_id"] = $current_project_id;
+
+// If its a POST request, there will most likely be more filters to be applied
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // DATE
+    if ( !empty($_POST["date_start"]) ) $filters["date"] = [
+        date("Y-m-d", strtotime($_POST["date_start"])), 
+        date("Y-m-d", strtotime($_POST["date_end"]))
+    ];
+    // TAGS
+    if ( !empty($_POST["tags"]) ) {
+        // Just making sure there are no empty array elements
+        $filters["tags"] = array_filter($_POST["tags"]);
+    }
+    // COLOR
+    if ( !empty($_POST["color"]) ) {
+        $filters["color"] = $_POST["color"];
+    }
+    // ICON
+    if ( !empty($_POST["icon"]) ) {
+        $filters["icon"] = $_POST["icon"];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -101,7 +98,7 @@ $filters["project_id"] = $current_project_id;
                     </button>
                 </div>
                 <div class="relative">
-                    <select class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select id="project_selection" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <?php foreach ($projects as $project): 
                             $selected = ($project["id"] == $current_project_id) ? 'selected' : ''; ?>
                             <option value="<?= $project["id"] ?>" <?= $selected ?> ><?= $project["title"] ?></option>
@@ -109,14 +106,22 @@ $filters["project_id"] = $current_project_id;
                     </select>
                 </div>
             </div>
-
+            <script>
+            // Event handler for the project selection dropdown
+            document.getElementById('project_selection').addEventListener('change', function() {
+                // When the selection changes we change the hidden input in the form
+                document.getElementById('post_project_id').value = this.value;
+                // and submit that form
+                document.getElementById('post_project_form').submit();
+            });
+            </script>
             <!-- Filters Section -->
             <div class="space-y-4">
                 <h2 class="text-lg font-semibold text-gray-300">Filters</h2>
                 
-                <form method="POST" class="space-y-4">
+                <form id="post_project_form" method="POST" class="space-y-4">
                     <!-- Hidden Project ID -->
-                    <input type="hidden" name="project_id" value="<?= $current_project_id ?>">
+                    <input id="post_project_id" type="hidden" name="project_id" value="<?= $current_project_id ?>">
 
                     <!-- DATE RANGE SELECTOR -->
                     <div class="space-y-2">
@@ -130,6 +135,8 @@ $filters["project_id"] = $current_project_id;
                             class="w-full bg-gray-700 border border-gray-600 rounded-md py-1 px-2 text-gray-200"
                             readonly
                         >
+                        <input id="date_start" type="hidden" name="date_start" value="">
+                        <input id="date_end" type="hidden" name="date_end" value="">
                         <!-- QUICK DATE ACCESS -->
                         <div class="flex space-x-2 mt-2">
                             <button type="button" 
@@ -240,6 +247,8 @@ $filters["project_id"] = $current_project_id;
                     date1.dateInstance = date2.dateInstance;
                     date2.dateInstance = tmp;
                 }
+                document.getElementById("date_start").value = date1.dateInstance.toISOString();
+                document.getElementById("date_end").value = date2.dateInstance.toISOString();
             });
         }
     });
