@@ -1,5 +1,8 @@
 <?php
 
+ini_set('display_errors', '1');
+error_reporting(E_ALL);
+
 // dotenv
 // idea general son distintos phps que se postean a si mismos con nombres de accion en el form
 // switch que elija accion y listo, tipo un $_POST["action"]
@@ -65,7 +68,7 @@ class Diana
                     WHERE 
                         p.id IN ($in);";
             */
-            $sql = "SELECT id, title, description FROM projects ORDER BY created_at DESC";
+            $sql = "SELECT id, title, description FROM projects ORDER BY created_at ASC";
             $list = $this->db->prepare($sql);
             $list->execute($ids);
             return $list->fetchAll();
