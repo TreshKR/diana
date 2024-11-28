@@ -205,17 +205,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     echo "    <div class='w-2 h-2 rounded-full {$event['color']}'></div>";
                     echo "    <div class='text-gray-200'>{$event['title']}, {$event['color']}, {$event['icon']}</div>";
                     echo "  </div>";
-                    echo "  <div class='flex gap-2'>";
-                    
-                    // individual tag pills
-                    $tagArray = array_map('trim', explode(',', $event['tags']));
-                    foreach ($tagArray as $tag) {
-                        if (!empty($tag)) {
-                            echo "<button type='button' class='px-2 py-1 text-xs rounded-full bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors'>{$tag}</button>";
+                    if ( !empty($event['tags']) ) {
+                        echo "  <div class='flex gap-2'>";
+                        // individual tag pills
+                        $tagArray = array_map('trim', explode(',', $event['tags']));
+                        foreach ($tagArray as $tag) {
+                            if (!empty($tag)) {
+                                echo "<button type='button' 
+                                        class='px-2 py-1 text-xs rounded-full bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors'>";
+                                echo $tag;
+                                echo "</button>";
+                            }
                         }
+                        echo "  </div>";
                     }
-                    
-                    echo "  </div>";
                     echo "</div>";
                 } ?>
             </div>
