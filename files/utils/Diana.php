@@ -127,7 +127,7 @@ class Diana
     // EVENTS
     public function event_list( array $filters = [], string $grouping = null ) {
 
-        //$grouping = "day";
+        //$grouping = "month";
         
         // Each array contains strings to be imploded while building the final sql query
         $sql = [
@@ -183,7 +183,6 @@ class Diana
         // With default grouping we dont group, and ordering is simply by display date
         if ( empty($grouping) ) {
             $sql["SELECT"][] = "e.*";
-            $sql["SELECT"][] = "null AS _period";
             $sql["SELECT"][] = "null AS period";
             $sql["GROUP"][] = "e.id";
             $sql["ORDER"][] = "e.display_timestamp DESC";
@@ -191,27 +190,36 @@ class Diana
         // All three grouping modes work the same
         // Set a time period (year, month, day) and group by that period.
         else if ( $grouping == "year" ) {
-            $sql["SELECT"][] = "'year' AS _period";
-            $sql["SELECT"][] = "TO_CHAR(e.display_timestamp, 'YYYY') AS period";
+            $sql["SELECT"][] = "concat('Count: ', COUNT(*)) AS title";
+            $sql["SELECT"][] = "null AS color";
+            $sql["SELECT"][] = "null AS icon";
+            $sql["SELECT"][] = "'year' AS period";
+            $sql["SELECT"][] = "TO_CHAR(e.display_timestamp, 'YYYY') AS display_timestamp";
             $sql["SELECT"][] = "COUNT(*) as event_count";
             $sql["GROUP"][] = "TO_CHAR(e.display_timestamp, 'YYYY')";
-            $sql["ORDER"][] = "period DESC";
+            $sql["ORDER"][] = "display_timestamp DESC";
         }
         // Grouping by month really means by year then month
         else if ( $grouping == "month" ) {
-            $sql["SELECT"][] = "'month' AS _period";
-            $sql["SELECT"][] = "TO_CHAR(e.display_timestamp, 'YYYY-MM') AS period";
+            $sql["SELECT"][] = "concat('Count: ', COUNT(*)) AS title";
+            $sql["SELECT"][] = "null AS color";
+            $sql["SELECT"][] = "null AS icon";
+            $sql["SELECT"][] = "'month' AS period";
+            $sql["SELECT"][] = "TO_CHAR(e.display_timestamp, 'YYYY-MM') AS display_timestamp";
             $sql["SELECT"][] = "COUNT(*) as event_count";
             $sql["GROUP"][] = "TO_CHAR(e.display_timestamp, 'YYYY-MM')";
-            $sql["ORDER"][] = "period DESC";
+            $sql["ORDER"][] = "display_timestamp DESC";
         }
         // Same thing here; by year, then month, then day
         else if ( $grouping == "day" ) {
-            $sql["SELECT"][] = "'day' AS _period";
-            $sql["SELECT"][] = "TO_CHAR(e.display_timestamp, 'YYYY-MM-DD') AS period";
+            $sql["SELECT"][] = "concat('Count: ', COUNT(*)) AS title";
+            $sql["SELECT"][] = "null AS color";
+            $sql["SELECT"][] = "null AS icon";
+            $sql["SELECT"][] = "'day' AS period";
+            $sql["SELECT"][] = "TO_CHAR(e.display_timestamp, 'YYYY-MM-DD') AS display_timestamp";
             $sql["SELECT"][] = "COUNT(*) as event_count";
             $sql["GROUP"][] = "TO_CHAR(e.display_timestamp, 'YYYY-MM-DD')";
-            $sql["ORDER"][] = "period DESC";
+            $sql["ORDER"][] = "display_timestamp DESC";
         }
         else die("HORRIBLE GROUPING DEATH");
         // END GROUPING AND ORDERING
