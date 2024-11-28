@@ -135,8 +135,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             class="w-full bg-gray-700 border border-gray-600 rounded-md py-1 px-2 text-gray-200"
                             readonly
                         >
-                        <input id="date_start" type="hidden" name="date_start" value="">
-                        <input id="date_end" type="hidden" name="date_end" value="">
+                        <input id="date_start" type="hidden" name="date_start" value="<?= $_POST['date_start'] ?? '' ?>">
+                        <input id="date_end" type="hidden" name="date_end" value="<?= $_POST['date_end'] ?? '' ?>">
                         <!-- QUICK DATE ACCESS -->
                         <div class="flex space-x-2 mt-2">
                             <button type="button" 
