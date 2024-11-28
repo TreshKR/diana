@@ -125,7 +125,132 @@ class Diana
     }
 
     // EVENTS
-    public function event_list( $filters = [] ) {
+    public function event_list( array $filters = [], string $grouping = null ) {
+
+        //$grouping = "day";
+        
+        // Each array contains strings to be imploded while building the final sql query
+        $sql = [
+            "CTE"       => [],
+            "SELECT"    => [],
+            "JOINS"     => [],
+            "WHERE"     => [],
+            "GROUP"     => [],
+            "ORDER"     => []
+        ];
+
+        // STATIC VALUES - these never change no matter the method's behaviour
+        $sql["JOINS"][] = "LEFT JOIN events_tags et ON e.id = et.event_id";
+        $sql["JOINS"][] = "LEFT JOIN tags ON et.tag_id = tags.id";
+        $sql["SELECT"][] = "STRING_AGG(DISTINCT tags.name, ', ') as tags";
+        // DYNAMIC VALUES such as project_id, dates and other filters
+        $params = [];
+
+        // FILTERS
+        // PROJECT is the only REQUIRED filter so far
+        if ( empty($filters["project_id"]) ) die("HORRIBLE DEATH");
+        $sql["WHERE"][] = "e.project_id = :project_id";
+        $params["project_id"] = $filters["project_id"];
+        unset($filters["project_id"]); // Unset the special filter from the filters
+        // TAGS - They work with a CTE
+        if ( !empty($filters["tags"]) ) {
+            $sql["CTE"][] = "events_with_required_tags AS (
+                SELECT events.id
+                FROM events
+                JOIN events_tags et ON events.id = et.event_id
+                JOIN tags ON et.tag_id = tags.id
+                WHERE tags.name IN ('".implode( "', '", $filters["tags"]    )."')
+                GROUP BY events.id
+            )";
+            $sql["JOINS"][] = "JOIN events_with_required_tags ewrt ON e.id = ewrt.id ";
+            unset($filters["tags"]); // Unset the special filter from the filters
+        }
+        // DATE - Contains start and end date
+        if ( !empty($filters["date"]) ) {
+            $sql["WHERE"][] = "e.display_timestamp BETWEEN :start::date AND :end::date";
+            $params["start"] = $filters["date"][0];
+            $params["end"] = $filters["date"][1];
+            unset($filters["date"]);
+        }
+        // OTHER FILTERS - The can be anything, as long as the events table has the corresponding column
+        foreach ( $filters AS $key => $value ) {
+            $sql["WHERE"][] = "e.$key = :$key";
+            $params[$key] = $value;
+        }
+        // FILTERS - END
+
+        // GROUPING AND ORDERING
+        // With default grouping we dont group, and ordering is simply by display date
+        if ( empty($grouping) ) {
+            $sql["SELECT"][] = "e.*";
+            $sql["SELECT"][] = "null AS _period";
+            $sql["SELECT"][] = "null AS period";
+            $sql["GROUP"][] = "e.id";
+            $sql["ORDER"][] = "e.display_timestamp DESC";
+        }
+        // All three grouping modes work the same
+        // Set a time period (year, month, day) and group by that period.
+        else if ( $grouping == "year" ) {
+            $sql["SELECT"][] = "'year' AS _period";
+            $sql["SELECT"][] = "TO_CHAR(e.display_timestamp, 'YYYY') AS period";
+            $sql["SELECT"][] = "COUNT(*) as event_count";
+            $sql["GROUP"][] = "TO_CHAR(e.display_timestamp, 'YYYY')";
+            $sql["ORDER"][] = "period DESC";
+        }
+        // Grouping by month really means by year then month
+        else if ( $grouping == "month" ) {
+            $sql["SELECT"][] = "'month' AS _period";
+            $sql["SELECT"][] = "TO_CHAR(e.display_timestamp, 'YYYY-MM') AS period";
+            $sql["SELECT"][] = "COUNT(*) as event_count";
+            $sql["GROUP"][] = "TO_CHAR(e.display_timestamp, 'YYYY-MM')";
+            $sql["ORDER"][] = "period DESC";
+        }
+        // Same thing here; by year, then month, then day
+        else if ( $grouping == "day" ) {
+            $sql["SELECT"][] = "'day' AS _period";
+            $sql["SELECT"][] = "TO_CHAR(e.display_timestamp, 'YYYY-MM-DD') AS period";
+            $sql["SELECT"][] = "COUNT(*) as event_count";
+            $sql["GROUP"][] = "TO_CHAR(e.display_timestamp, 'YYYY-MM-DD')";
+            $sql["ORDER"][] = "period DESC";
+        }
+        else die("HORRIBLE GROUPING DEATH");
+        // END GROUPING AND ORDERING
+
+        // SQL QUERY GENERATION
+        // Its just imploding whatever we put into the $sql array
+        $query = "";
+        // CTE statement
+        if (!empty($sql["CTE"])) $query .= "WITH " . implode( ", ", $sql["CTE"] ) . " ";
+        // SELECT statement - columns
+        $query .= "SELECT " . implode( ", ", $sql["SELECT"] ) . " ";
+        // FROM statement
+        $query .= "FROM events e" . " ";
+        // JOIN statements
+        if (!empty($sql["JOINS"])) $query .= implode( " ", $sql["JOINS"] ) . " ";
+        // WHERE statement - conditions
+        if (!empty($sql["WHERE"])) $query .= "WHERE " . implode(" AND ", $sql["WHERE"]) . " ";
+        // GROUP BY statement
+        $query .= "GROUP BY " . implode( ", ", $sql["GROUP"] ) . " ";
+        // ORDER BY statement
+        $query .= "ORDER BY " . implode( ", ", $sql["ORDER"] ) . " ";
+        
+        try {
+            /*
+            // Esto imprime el SQL masomenos formateado (un toque cabeza pero anda)
+            $query = preg_replace('/\b(SELECT|FROM|WHERE|AND|OR|ORDER BY|GROUP BY)\b/i', "<br/>$1", $query);
+            echo $query;
+            die();  
+            */
+            $list = $this->db->prepare($query);
+            // Use the params array to complete the prepared statement
+            $list->execute($params);
+            return $list->fetchAll();
+        } catch (Exception $e) {
+            die($e->getMessage());
+        }
+
+    }
+    public function _event_list( $filters = [] ) {
 
         // TAGS are the only filter that have their own table. They behave in a special way
         $tags   = !empty($filters["tags"]) ? $filters["tags"] : null;
