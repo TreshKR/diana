@@ -1,4 +1,4 @@
-<style>.litepicker {
+.litepicker {
     background-color: #1F2937;
     border: 1px solid #374151;
     border-radius: 0.5rem;
@@ -40,5 +40,3 @@
 .litepicker .container__days .day-item.is-today {
     color: #60A5FA;
 }
-
-</style>
