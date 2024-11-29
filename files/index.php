@@ -302,7 +302,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                         </div>
 
-                        <!-- Icon Selection -->
+                        <!-- Text Input -->
+                        <div class="space-y-2">
+                            <label for="input_text" class="block text-sm font-medium text-gray-400">
+                                Additional notes
+                            </label>
+                            <textarea 
+                                id="input_text" 
+                                name="input_text" 
+                                rows="4"
+                                placeholder="Add any additional details about this event..."
+                                class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500"
+                            ></textarea>
+                        </div>
+
+                        <!-- Tag Selection and Creation -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-400">
+                                Add tags
+                            </label>
+                            <div class="p-2 bg-gray-700 rounded-md space-y-3">
+                                <!-- Tags seleccionados -->
+                                <div id="selectedTags" class="flex flex-wrap gap-2">
+                                    <!-- Los tags seleccionados se insertarán aquí dinámicamente -->
+                                </div>
+
+                                <!-- Input para tags -->
+                                <div class="relative">
+                                    <input 
+                                        type="text" 
+                                        id="tagInput"
+                                        placeholder="Type to add tags..."
+                                        class="w-full bg-gray-800 border border-gray-600 rounded-md py-2 px-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500"
+                                    >
+                                    <!-- Dropdown de sugerencias -->
+                                    <div id="tagSuggestions" 
+                                        class="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg hidden">
+                                    </div>
+                                </div>
+
+                                <!-- Tags existentes -->
+                                <div class="pt-2 border-t border-gray-600">
+                                    <p class="text-xs text-gray-400 mb-2">Existing tags:</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <?php foreach ($Diana->tag_list($current_project_id) as $tag): ?>
+                                            <button type="button"
+                                                    onclick="addTag('<?= $tag['name'] ?>')"
+                                                    class="px-2 py-1 text-sm rounded-full bg-gray-800 hover:bg-gray-600 text-gray-300 transition-colors duration-150">
+                                                <?= $tag['name'] ?>
+                                            </button>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden inputs para enviar los datos -->
+                            <input type="hidden" id="tagList" name="tags" value="">
+                            <input type="hidden" id="newTags" name="new_tags" value="">
+                        </div>
+
+                                                <!-- Icon Selection -->
                         <div class="space-y-2">
                             <label class="block text-sm font-medium text-gray-400">
                                 Add an icon (optional)
@@ -403,18 +462,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <input type="hidden" id="selected_color" name="color" value="">
                         </div>
 
-                        <!-- Text Input -->
-                        <div class="space-y-2">
-                            <label for="input_text" class="block text-sm font-medium text-gray-400">
-                                Additional notes
-                            </label>
-                            <textarea 
-                                id="input_text" 
-                                name="input_text" 
-                                rows="4"
-                                placeholder="Add any additional details about this event..."
-                                class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500"
-                            ></textarea>
+                        <!-- Submit Button -->
+                        <div class="mt-8">
+                            <button type="submit"
+                                    class="w-full bg-blue-600 text-white rounded-md py-2 px-4 hover:bg-blue-700 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800">
+                                Create Event
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -551,6 +604,88 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 document.getElementById("date_start").value = date1.dateInstance.toISOString();
                 document.getElementById("date_end").value = date2.dateInstance.toISOString();
             });
+        }
+    });
+
+    // Sistema de manejo de tags
+    let selectedTags = new Set();
+    let newTags = new Set();
+
+    function addTag(tagName) {
+        // Normalizamos el tag (trim, lowercase)
+        tagName = tagName.trim().toLowerCase();
+        if (!tagName) return;
+
+        // Evitamos duplicados
+        if (selectedTags.has(tagName)) return;
+
+        // Agregamos el tag
+        selectedTags.add(tagName);
+
+        // Si es un tag nuevo, lo agregamos a newTags
+        if (!isExistingTag(tagName)) {
+            newTags.add(tagName);
+        }
+
+        // Actualizamos la UI
+        updateTagsUI();
+        // Actualizamos los inputs hidden
+        updateHiddenInputs();
+    }
+
+    function removeTag(tagName) {
+        selectedTags.delete(tagName);
+        newTags.delete(tagName);
+        updateTagsUI();
+        updateHiddenInputs();
+    }
+
+    function isExistingTag(tagName) {
+        // Convertimos los tags existentes a un array de nombres en lowercase
+        const existingTags = Array.from(document.querySelectorAll('#tagSuggestions button'))
+            .map(btn => btn.textContent.toLowerCase());
+        return existingTags.includes(tagName.toLowerCase());
+    }
+
+    function updateTagsUI() {
+        const container = document.getElementById('selectedTags');
+        container.innerHTML = '';
+
+        selectedTags.forEach(tag => {
+            const tagElement = document.createElement('span');
+            tagElement.className = 'inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-500/20 text-blue-300 text-sm';
+            tagElement.innerHTML = `
+                ${tag}
+                <button type="button" 
+                        onclick="removeTag('${tag}')"
+                        class="hover:text-blue-200 transition-colors duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" 
+                        class="h-4 w-4" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor">
+                        <path stroke-linecap="round" 
+                            stroke-linejoin="round" 
+                            stroke-width="2" 
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>`;
+            container.appendChild(tagElement);
+        });
+    }
+
+    function updateHiddenInputs() {
+        document.getElementById('tagList').value = Array.from(selectedTags).join(',');
+        document.getElementById('newTags').value = Array.from(newTags).join(',');
+    }
+
+    // Manejo del input de tags
+    document.getElementById('tagInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            const tagName = this.value.replace(',', '');
+            addTag(tagName);
+            this.value = '';
         }
     });
 
