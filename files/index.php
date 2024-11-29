@@ -14,6 +14,7 @@ $filters["project_id"] = $current_project_id;
 
 // If its a POST request, there will most likely be more filters to be applied
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
     // DATE
     if ( !empty($_POST["date_start"]) ) $filters["date"] = [
         date("Y-m-d", strtotime($_POST["date_start"])), 
@@ -31,6 +32,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ICON
     if ( !empty($_POST["icon"]) ) {
         $filters["icon"] = $_POST["icon"];
+    }
+
+    // NEW EVENT
+    if ( !empty($_POST["action"]) ) {
+        switch( $_POST["action"] ) {
+            case "event_add":
+                $required = [ "project_id", "display_timestamp", "input_text", "title" ];
+                $optional = [ "new_tags", "icon", "color" ];
+                $payload  = $Diana->buildPayload($required, $optional, $_POST);
+                if( !$payload ) die("wrong params"); // work in progress for future debugging utility ;)
+                $Diana->event_add($payload);
+            break;
+        }
     }
 }
 ?>

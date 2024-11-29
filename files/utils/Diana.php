@@ -180,6 +180,51 @@ class Diana
         }
 
     }
+
+    public function event_add ( $payload = [] ) {
+        try {
+            // begin transaction
+            $this->db->beginTransaction();
+            // if new_tags
+            $inserted_tags = [];
+            if( !empty($payload["new_tags"])) {
+                // insert into table tags   
+                $inserted_tags = $this->db->tags_add( array_values($payload["new_tags"]) );
+                // remove new_tags from payload for event insert
+                // maybe could take them as separate param
+                unset( $payload["new_tags"] ); 
+            }
+            // workaround. need to optimize the tags aspect of this
+            $tags = array_merge($payload["tags"], $inserted_tags);
+            unset( $payload["tags"] );
+            // insert event
+            $add_string = implode(", ", array_keys($payload));
+            $placeholder_string = ":" . implode(", :", array_keys($payload));
+            $sql = "INSERT INTO events ($add_string) VALUES ($placeholder_string)";
+            $event_insert = $this->db->prepare($sql)->execute($payload);
+            $event_id = $event_insert->lastInsertId(); // event_id for events_tags insert
+            // insert into events_tags
+            $pairs = [];
+            $values = [];
+            foreach( $tags as $tag_id ) {
+                $pairs[] = '(?,?)';
+                $values[] = $event_id;
+                $values[] = $tag_id;
+            }
+            $sql = "INSERT INTO events_tags (event_id, tag_id) VALUES " . implode(',', $pairs);
+            $et_insert = $this->db->prepare($sql)->execute($values);
+            // commit transaction
+            $this->db->commit();
+            // return
+        } catch ( Exception $e ) {
+            // rollback transaction
+            $this->db->rollBack();
+            die($e->getMessage());
+
+        }
+    }
+
+    // TAGS
     public function tag_list( $project_id = null ) {
         $sql = "SELECT tags.name, COUNT(DISTINCT events.id) as count
                 FROM tags 
@@ -196,6 +241,20 @@ class Diana
             die($e->getMessage());
         }
     }
+
+    public function tags_add ($payload = [] ) {
+        $placeholders = str_repeat('(?),', count($payload) - 1) . '(?)';
+        $sql = "INSERT INTO tags (name) VALUES " . $placeholders. " RETURNING id"; // RETURNING id - saves the inserted id to an array
+        try {
+            $insert = $this->db->prepare( $sql );
+            $insert->execute( $payload );
+            return $insert->fetchAll(PDO::FETCH_COLUMN); // returns an array with the inserted tags' ids
+        } catch ( Exception $e ) {
+            throw new Exception("bad tags_add"); // possible idea for handling? just throw everything and have a big debug in try/catch loop in index.php ??
+        }
+    }
+
+    // COLORS
     public function color_list( $project_id = null ) {
         $sql = "SELECT color, COUNT(DISTINCT id) as count FROM events
                 WHERE project_id = :project_id
@@ -209,6 +268,8 @@ class Diana
             die($e->getMessage());
         }
     }
+
+    // ICONS
     public function icon_list( $project_id = null ) {
         $sql = "SELECT icon, COUNT(DISTINCT id) as count FROM events
                 WHERE project_id = :project_id
@@ -221,5 +282,32 @@ class Diana
         } catch (Exception $e) {
             die($e->getMessage());
         }
+    }
+
+    
+    /*
+    *
+    *   UTILITIES
+    *   functions that are to be used - non database related
+    */
+    // utility 4 payload filtering via required + optional fields
+    function buildPayload( $requiredFields, $optionalFields, $postData ) {
+        // First check for required fields
+        $payload = [];
+        foreach ($requiredFields as $field) {
+            if (!isset($postData[$field])) {
+                return false;  // Missing required field
+            }
+            $payload[$field] = $postData[$field];
+        }
+
+        // Then add any optional fields that are present
+        foreach ($optionalFields as $field) {
+            if (isset($postData[$field])) {
+                $payload[$field] = $postData[$field];
+            }
+        }
+        
+        return $payload;
     }
 }
